@@ -5,9 +5,9 @@
   "homepage": "https://nssokada.github.io/QuadJapan_HumanoidRobot/",
   "scripts": {
     "start": "webpack serve",
-    "build": "webpack --mode=production",
+    "build": "webpack --mode=production && rm -rf docs && mkdir docs && cp -r dist/* docs",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "echo 'Use GitHub Pages settings for main/docs'"
   },
   "keywords": [],
   "author": "",
