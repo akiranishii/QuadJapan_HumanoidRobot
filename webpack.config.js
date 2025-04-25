@@ -2,11 +2,12 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    mode: 'development',
+    mode: 'production', // CHANGE: use production for deploy build
     entry: './src/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js'
+        filename: 'bundle.js',
+        publicPath: '/', // ADD: ensures routes and static assets resolve correctly
     },
     module: {
         rules: [
@@ -32,6 +33,7 @@ module.exports = {
         static: {
             directory: path.join(__dirname, 'public'),
         },
+        historyApiFallback: true, // ADD: ensures SPA routing works with React Router
         port: 3000,
         open: true
     }
