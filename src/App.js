@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react'; // Added useRef
 import WorldMap from './WorldMap';
+import robotSketch from './assets/robotsketch.png'; // update path if needed
 
 function App() {
     // --- State for Dropdown Selection (Example) ---
@@ -220,7 +221,7 @@ function App() {
                 {/* Image Container with Interactive Regions */}
                 <div style={imageContainerStyle}>
                     <img
-                        src="robotsketch.png"
+                        src={robotSketch}
                         alt="Robot Assistant"
                         style={imageStyle}
                     />

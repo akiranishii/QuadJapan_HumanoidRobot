@@ -2,12 +2,13 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    mode: 'production', // CHANGE: use production for deploy build
+    mode: 'production',
     entry: './src/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js',
-        publicPath: '/QuadJapan_HumanoidRobot/', // <- MATCHES your homepage subpath
+        publicPath: '/QuadJapan_HumanoidRobot/',
+        assetModuleFilename: 'images/[hash][ext][query]' // Organize image outputs
     },
     module: {
         rules: [
@@ -21,6 +22,10 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.(png|jpe?g|gif|svg)$/i,  // Support images!
+                type: 'asset/resource'
             }
         ]
     },
@@ -33,7 +38,7 @@ module.exports = {
         static: {
             directory: path.join(__dirname, 'public'),
         },
-        historyApiFallback: true, // ADD: ensures SPA routing works with React Router
+        historyApiFallback: true,
         port: 3000,
         open: true
     }
