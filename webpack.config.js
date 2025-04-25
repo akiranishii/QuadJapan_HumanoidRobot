@@ -7,7 +7,7 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js',
-        publicPath: '/', // ADD: ensures routes and static assets resolve correctly
+        publicPath: '/QuadJapan_HumanoidRobot/', // <- MATCHES your homepage subpath
     },
     module: {
         rules: [
