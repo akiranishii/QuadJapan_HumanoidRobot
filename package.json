@@ -15,18 +15,22 @@
   "description": "",
   "dependencies": {
     "d3": "^7.9.0",
+    "papaparse": "^5.5.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "topojson-client": "^3.1.0"
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/preset-env": "^7.26.9",
-    "@babel/preset-react": "^7.26.3",
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
     "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
     "gh-pages": "^6.3.0",
     "html-webpack-plugin": "^5.6.3",
-    "webpack": "^5.99.6",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.8",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.1"
   }

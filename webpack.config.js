@@ -2,13 +2,11 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    mode: 'production',
+    mode: 'development',
     entry: './src/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js',
-        publicPath: '/QuadJapan_HumanoidRobot/',
-        assetModuleFilename: 'images/[hash][ext][query]' // Organize image outputs
     },
     module: {
         rules: [
@@ -16,7 +14,7 @@ module.exports = {
                 test: /\.(js|jsx)$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: 'babel-loader'
+                    loader: 'babel-loader',
                 }
             },
             {
@@ -24,22 +22,27 @@ module.exports = {
                 use: ['style-loader', 'css-loader']
             },
             {
-                test: /\.(png|jpe?g|gif|svg)$/i,  // Support images!
-                type: 'asset/resource'
+                test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                type: 'asset/resource',
             }
         ]
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: './public/index.html'
-        })
+            template: './public/index.html',
+            filename: 'index.html',
+            inject: 'body'
+        }),
     ],
     devServer: {
         static: {
             directory: path.join(__dirname, 'public'),
         },
-        historyApiFallback: true,
         port: 3000,
-        open: true
+        hot: true,
+        historyApiFallback: true
+    },
+    resolve: {
+        extensions: ['.js', '.jsx'],
     }
 };

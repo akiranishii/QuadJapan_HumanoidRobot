@@ -1,0 +1,134 @@
+Company,Country,Mkt Cap ($mn),Category,Product,Products Grouped
+Palantir,USA,236526,Brain,Data Science & Analytics,AI & Software
+Oracle,USA,469582,Brain,Data Science & Analytics,AI & Software
+Siemens,Germany,164454,Brain,Diversified Automation,Automation Software
+Siemens,Germany,164454,Brain,Simulation,Software/Simulation
+Siemens,Germany,164454,Brain,Sensors,Sensors/Electronics
+Siemens,Germany,164454,Brain,Vision,Sensors/Electronics
+Siemens,Germany,164454,Brain,Motors,Mechanical & Motion
+Baidu,China,25998,Brain,Foundational Models,AI & Software
+Meta,USA,1784347,Brain,Foundational Models,AI & Software
+Meta,USA,1784347,Brain,Simulation,Software/Simulation
+Alphabet Inc.,USA,2525679,Brain,Foundational Models,AI & Software
+Alphabet Inc.,USA,2525679,Brain,Simulation,Software/Simulation
+Microsoft,USA,3065550,Brain,Foundational Models,AI & Software
+Microsoft,USA,3065550,Brain,Data Science & Analytics,AI & Software
+Intel,USA,83526,Brain,Semis (Compute),Semiconductor & Compute
+Intel,USA,83526,Brain,Vision,Sensors/Electronics
+Intel,USA,83526,Brain,Lidar,Sensors/Electronics
+Intel,USA,83526,Brain,Semis (Fab),Semiconductor & Compute
+NVIDIA,USA,2905739,Brain,Semis (Compute),Semiconductor & Compute
+NVIDIA,USA,2905739,Brain,Foundational Models,AI & Software
+NVIDIA,USA,2905739,Brain,Simulation,Software/Simulation
+Synopsys,USA,80980,Brain,Semis (Design),Semiconductor & Compute
+Cadence Design Systems,USA,82188,Brain,Semis (Design),Semiconductor & Compute
+Arm Holdings,UK,170472,Brain,Semis (Design),Semiconductor & Compute
+TSMC,Taiwan,1058181,Brain,Semis (Fab),Semiconductor & Compute
+Samsung Electronics,Korea,244701,Brain,Semis (Memory),Semiconductor & Compute
+Samsung Electronics,Korea,244701,Brain,Semis (Fab),Semiconductor & Compute
+Micron,USA,101011,Brain,Semis (Memory),Semiconductor & Compute
+SK Hynix,Korea,90010,Brain,Semis (Memory),Semiconductor & Compute
+SK Hynix,Korea,90010,Brain,Sensors,Sensors/Electronics
+SK Hynix,Korea,90010,Brain,Vision,Sensors/Electronics
+Horizon Robotics,China,1449,Brain,Semis (Vision),Semiconductor & Compute
+Ambarella,USA,3187,Brain,Semis (Vision),Semiconductor & Compute
+Mobileye,USA,12912,Brain,Semis (Vision),Semiconductor & Compute
+Qualcomm,USA,191277,Brain,Semis (Vision),Semiconductor & Compute
+Dassault Systemes,France,55446,Brain,Simulation,Software/Simulation
+Dassault Systemes,France,55446,Brain,Vision & Reality Capture Software,AI & Software
+Hexagon,Sweden,31659,Brain,Vision,Sensors/Electronics
+Hexagon,Sweden,31659,Brain,Simulation,Software/Simulation
+Hexagon,Sweden,31659,Brain,Vision & Reality Capture Software,AI & Software
+Valeo,France,2613,Body,"ADAS (Radar, etc.)",Sensors
+Xusheng,China,2050,Body,Aluminum Castings,Mechanical (Cast/Frames)
+Magna,Canada,10850,Body,Aluminum Castings,Mechanical (Cast/Frames)
+Magna,Canada,10850,Body,"ADAS (Radar, etc.)",Sensors
+EVE Energy,China,11883,Body,Batteries (Complete),Energy & Power
+Samsung SDI,Korea,12802,Body,Batteries (Complete),Energy & Power
+LG Energy Solution,Korea,53265,Body,Batteries (Complete),Energy & Power
+CATL,China,155380,Body,Batteries (Complete),Energy & Power
+Shuanglin,China,1987,Body,Bearings,Mechanical & Motion
+Schaeffler,Germany,4070,Body,Bearings,Mechanical & Motion
+Schaeffler,Germany,4070,Body,Linear Guides,Mechanical & Motion
+NSK,Japan,2018,Body,Bearings,Mechanical & Motion
+NSK,Japan,2018,Body,Screws,Mechanical & Motion
+Timken,USA,5533,Body,Bearings,Mechanical & Motion
+Timken,USA,5533,Body,Reducers,Mechanical & Motion
+Timken,USA,5533,Body,Complete Actuators,Mechanical & Motion
+RBC Bearings,USA,11597,Body,Bearings,Mechanical & Motion
+Tuopu,China,4348,Body,Complete Actuators,Mechanical & Motion
+Tuopu,China,4348,Body,"Thermal (Pumps, Battery Cooling, etc.)",Mechanical (Cast/Frames)
+Sanhuan,China,15706,Body,Complete Actuators,Mechanical & Motion
+Shenzhen Inovance,China,22665,Body,Motors,Mechanical & Motion
+Moog,USA,5839,Body,Complete Actuators,Mechanical & Motion
+Moog,USA,5839,Body,Defense Platforms,Other Systems
+Rockwell Automation,USA,30557,Body,Diversified Automation,Industrial/Automation
+Honeywell,USA,145963,Body,Diversified Automation,Industrial/Automation
+Honeywell,USA,145963,Body,Vision,Sensors/Electronics
+Honeywell,USA,145963,Body,Avionics,Sensors/Electronics
+Siemens,Germany,164454,Body,Diversified Automation,Industrial/Automation
+Siemens,Germany,164454,Body,Simulation,Software/Simulation
+Siemens,Germany,164454,Body,Sensors,Sensors
+Siemens,Germany,164454,Body,Vision,Sensors/Electronics
+Siemens,Germany,164454,Body,Motors,Mechanical & Motion
+Hon Hai Precision (Foxconn),Taiwan,69364,Body,Electronics Components,Electronics
+Novanta,USA,3212,Body,Sensors (Force),Sensors
+Hota,Taiwan,497,Body,Gears/Reducers,Mechanical & Motion
+Harmonic Drive Systems,Japan,2776,Body,Gears/Reducers,Mechanical & Motion
+LeaderDrive,China,2119,Body,Gears/Reducers,Mechanical & Motion
+Shuanghuan,China,3970,Body,Gears/Reducers,Mechanical & Motion
+Nabtesco,Japan,2067,Body,Gears/Reducers,Mechanical & Motion
+Zhongda Leader,China,1162,Body,Motors,Mechanical & Motion
+Zhongda Leader,China,1162,Body,Gears/Reducers,Mechanical & Motion
+Leadshine,China,1421,Body,Motors,Mechanical & Motion
+Etsun,China,1135,Body,Motors,Mechanical & Motion
+Zhaowei,China,627,Body,Motors,Mechanical & Motion
+Moons Electric,China,3583,Body,Motors,Mechanical & Motion
+Regal Rexnord,USA,9334,Body,Motors,Mechanical & Motion
+Regal Rexnord,USA,9334,Body,Bearings,Mechanical & Motion
+Regal Rexnord,USA,9334,Body,Gears,Mechanical & Motion
+Regal Rexnord,USA,9334,Body,Complete Actuators,Mechanical & Motion
+Nidec,Japan,19028,Body,Motors,Mechanical & Motion
+Nidec,Japan,19028,Body,Encoders,Sensors/Electronics
+GAC Group,China,4071,Integrator,Autos,Automotive/Transportation
+GAC Group,China,4071,Integrator,Robotics,Robotics
+XPENG,China,13146,Integrator,Autos,Automotive/Transportation
+XPENG,China,13146,Integrator,Robotics,Robotics
+XPENG,China,13146,Integrator,EVTOL,Automotive/Transportation
+Hyundai,Korea,36405,Integrator,Autos,Automotive/Transportation
+Hyundai,Korea,36405,Integrator,Robotics,Robotics
+BYD,China,109785,Integrator,Autos,Automotive/Transportation
+BYD,China,109785,Integrator,Robotics,Robotics
+Toyota,Japan,243296,Integrator,Autos,Automotive/Transportation
+Toyota,Japan,243296,Integrator,Robotics,Robotics
+Tesla,USA,1261551,Integrator,Autos,Automotive/Transportation
+Tesla,USA,1261551,Integrator,Robotics,Robotics
+Tesla,USA,1261551,Integrator,Energy Storage,Energy & Power
+LG Electronics,Korea,9650,Integrator,Consumer Electronics,Consumer/Internet
+LG Electronics,Korea,9650,Integrator,Robotics,Robotics
+Xiaomi,China,127127,Integrator,Consumer Electronics,Consumer/Internet
+Xiaomi,China,127127,Integrator,Autos,Automotive/Transportation
+Apple,USA,3497145,Integrator,Consumer Electronics,Consumer/Internet
+Apple,USA,3497145,Integrator,Robotics,Robotics
+Alibaba,China,245066,Integrator,E-Commerce,Consumer/Internet
+Amazon,USA,2545426,Integrator,E-Commerce; Cloud,Consumer/Internet
+Amazon,USA,2545426,Integrator,Robotics,Robotics
+Amazon,USA,2545426,Integrator,Satellite Comms,Telecommunications
+Hon Hai Precision (Foxconn),Taiwan,69364,Integrator,Electronic Components,Electronics
+Naver,Korea,22239,Integrator,Internet,Consumer/Internet
+Naver,Korea,22239,Integrator,Robotics,Robotics
+Tencent,China,491611,Integrator,Internet,Consumer/Internet
+Tencent,China,491611,Integrator,Robotics,Robotics
+Estun,China,2172,Integrator,Motors,Mechanical & Motion
+Estun,China,2172,Integrator,Robotics,Robotics
+Rainbow Robotics,Korea,1200,Integrator,Robotics,Robotics
+UBTech,China,600,Integrator,Robotics,Robotics
+Midea,China,77986,Integrator,Robotics,Robotics
+ABB,Switzerland,100438,Integrator,Robotics,Robotics
+ABB,Switzerland,100438,Integrator,Complete Actuators,Mechanical & Motion
+Samsung Electronics,Korea,244701,Integrator,Semis (Memory),Semiconductor & Compute
+Samsung Electronics,Korea,244701,Integrator,Semis (Fab),Semiconductor & Compute
+Teradyne,USA,18187,Integrator,Testing Equipment,Other
+Teradyne,USA,18187,Integrator,Robotics,Robotics
+Sony Group,Japan,133800,Integrator,Vision,Sensors/Electronics
+Sony Group,Japan,133800,Integrator,Robotics,Robotics
