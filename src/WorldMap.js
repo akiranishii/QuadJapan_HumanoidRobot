@@ -2,32 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 
-const WorldMap = ({ theme = 'default', arrowDirection = 'us-to-jp', selectedDataset, selectedOption, connectionType = 'japan-us', onThemeChange, onConnectionTypeChange }) => {
+const WorldMap = ({ theme = 'default', selectedDataset, selectedOption }) => {
     const svgRef = useRef(null);
     const [tooltipContent, setTooltipContent] = useState('');
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [showTooltip, setShowTooltip] = useState(false);
     const [mapError, setMapError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    // Use the connectionType prop instead of internal state
-    // const [connectionType, setConnectionType] = useState('japan-us'); // 'japan-us' or 'china-us'
 
     // The theme is fixed to 'default' regardless of what's passed in
     const fixedTheme = 'default';
 
-    // Re-render map when theme or arrowDirection changes
+    // Re-render map when theme or dataset changes
     useEffect(() => {
-        console.log("Direction changed to:", arrowDirection, "Theme:", theme, "Connection:", connectionType);
+        console.log("Dataset changed to:", selectedDataset, "Option:", selectedOption);
         renderMap();
-    }, [theme, arrowDirection, connectionType, selectedDataset, selectedOption]);
-
-    // Expose toggle function to parent component
-    useEffect(() => {
-        if (onConnectionTypeChange) {
-            // Provide the parent with the toggle function
-            onConnectionTypeChange(toggleConnection);
-        }
-    }, []);
+    }, [theme, selectedDataset, selectedOption]);
 
     const getThemeColors = () => {
         // Always use default theme colors regardless of theme prop
@@ -35,9 +25,59 @@ const WorldMap = ({ theme = 'default', arrowDirection = 'us-to-jp', selectedData
             background: '#ffffff',
             land: '#f9fafb',
             border: '#d1d5db',
-            connection: '#6b7280',
-            node: '#6b7280'
+            bubbleStroke: '#3b82f6', // Blue outline
+            bubbleFill: 'rgba(59, 130, 246, 0.5)' // Semi-transparent blue fill
         };
+    };
+
+    // Sample data for bubble chart - replace with your actual data
+    // Each country should have a value that determines bubble size
+    const getBubbleData = () => {
+        // This function would ideally fetch or process real data
+        // For now, we'll use sample data
+
+        // Different datasets based on selection
+        if (selectedDataset === 'datasetA') {
+            return [
+                { country: "United States", value: 100, code: "USA", coordinates: [-95.7129, 37.0902] },
+                { country: "Japan", value: 65, code: "JPN", coordinates: [138.2529, 36.2048] },
+                { country: "China", value: 140, code: "CHN", coordinates: [104.1954, 35.8617] },
+                { country: "Germany", value: 50, code: "DEU", coordinates: [10.4515, 51.1657] },
+                { country: "Brazil", value: 45, code: "BRA", coordinates: [-53.0, -10.0] },
+                { country: "India", value: 90, code: "IND", coordinates: [78.9629, 20.5937] },
+                { country: "Australia", value: 35, code: "AUS", coordinates: [133.7751, -25.2744] },
+                { country: "South Korea", value: 40, code: "KOR", coordinates: [127.7669, 35.9078] },
+                { country: "United Kingdom", value: 55, code: "GBR", coordinates: [-3.4360, 55.3781] },
+                { country: "France", value: 45, code: "FRA", coordinates: [2.2137, 46.2276] }
+            ];
+        } else {
+            return [
+                { country: "United States", value: 85, code: "USA", coordinates: [-95.7129, 37.0902] },
+                { country: "Japan", value: 95, code: "JPN", coordinates: [138.2529, 36.2048] },
+                { country: "China", value: 110, code: "CHN", coordinates: [104.1954, 35.8617] },
+                { country: "Germany", value: 75, code: "DEU", coordinates: [10.4515, 51.1657] },
+                { country: "Brazil", value: 25, code: "BRA", coordinates: [-53.0, -10.0] },
+                { country: "India", value: 60, code: "IND", coordinates: [78.9629, 20.5937] },
+                { country: "Australia", value: 55, code: "AUS", coordinates: [133.7751, -25.2744] },
+                { country: "South Korea", value: 80, code: "KOR", coordinates: [127.7669, 35.9078] },
+                { country: "United Kingdom", value: 40, code: "GBR", coordinates: [-3.4360, 55.3781] },
+                { country: "France", value: 70, code: "FRA", coordinates: [2.2137, 46.2276] }
+            ];
+        }
+    };
+
+    // Get the metric label based on the selected option
+    const getMetricLabel = () => {
+        switch (selectedOption) {
+            case 'option1':
+                return 'Robot Production';
+            case 'option2':
+                return 'AI Development';
+            case 'option3':
+                return 'Market Size';
+            default:
+                return 'Value';
+        }
     };
 
     const renderMap = async () => {
@@ -100,7 +140,7 @@ const WorldMap = ({ theme = 'default', arrowDirection = 'us-to-jp', selectedData
             m1.append('feMergeNode').attr('in', 'shadow');
             m1.append('feMergeNode').attr('in', 'SourceGraphic');
 
-            // glow
+            // glow effect for bubbles
             const glow = defs
                 .append('filter').attr('id', 'glow')
                 .attr('x', '-50%').attr('y', '-50%')
@@ -111,33 +151,6 @@ const WorldMap = ({ theme = 'default', arrowDirection = 'us-to-jp', selectedData
             const m2 = glow.append('feMerge');
             m2.append('feMergeNode').attr('in', 'coloredBlur');
             m2.append('feMergeNode').attr('in', 'SourceGraphic');
-
-            // Add gradient definitions for connection outlines
-            const outlineGradient = defs.append("linearGradient")
-                .attr("id", "outline-gradient")
-                .attr("gradientUnits", "userSpaceOnUse");
-
-            // Set gradient colors - red to blue for outline
-            outlineGradient.append("stop")
-                .attr("offset", "0%")
-                .attr("stop-color", "#ef4444"); // Red
-
-            outlineGradient.append("stop")
-                .attr("offset", "100%")
-                .attr("stop-color", "#3b82f6"); // Blue
-
-            // Add marker definitions for arrows - small black arrow
-            defs.append("marker")
-                .attr("id", "arrow")
-                .attr("viewBox", "0 -5 10 10")
-                .attr("refX", 25)
-                .attr("refY", 0)
-                .attr("markerWidth", 10)
-                .attr("markerHeight", 10)
-                .attr("orient", "auto")
-                .append("path")
-                .attr("d", "M0,-5L10,0L0,5")
-                .attr("fill", "#000000"); // Black arrow
 
             // ─── Background ─────────────────────────────────────────────────────────
             svg
@@ -171,230 +184,169 @@ const WorldMap = ({ theme = 'default', arrowDirection = 'us-to-jp', selectedData
                     // Darken the highlighted country a bit
                     const highlightColor = theme === 'default' ? '#e5e7eb' : d3.color(colors.land).darker(0.3);
                     d3.select(e.currentTarget).attr('fill', highlightColor);
-                    // Removed tooltip functionality
                 })
                 .on('mouseout', e => {
                     d3.select(e.currentTarget).attr('fill', colors.land);
-                    // Removed tooltip functionality
                 });
 
-            // ─── Connection + Labels ─────────────────────────────────────────────────
-            // Define coordinates based on arrow direction and connection type
-            let sourceCoords, targetCoords, sourceLabel, targetLabel;
+            // ─── Bubble Chart Overlay ────────────────────────────────────────────────
+            // Get bubble data
+            const bubbleData = getBubbleData();
 
-            console.log("Rendering map with direction:", arrowDirection, "and connection:", connectionType);
+            // Calculate bubble sizes - scale values to reasonable bubble sizes
+            const valueExtent = d3.extent(bubbleData, d => d.value);
+            const bubbleScale = d3.scaleSqrt()
+                .domain(valueExtent)
+                .range([10, 40]); // Increased min and max bubble radius for better visibility
 
-            // US coordinates
-            const usCoords = projection([-95.7129, 37.0902]);
-            // Japan coordinates
-            const jpCoords = projection([138.2529, 36.2048]);
-            // China coordinates
-            const cnCoords = projection([104.1954, 35.8617]);
+            // Create a new group for bubbles
+            const bubbleGroup = svg.append('g')
+                .attr('class', 'bubbles');
 
-            if (connectionType === 'japan-us') {
-                if (arrowDirection === 'us-to-jp') {
-                    sourceCoords = usCoords;
-                    targetCoords = jpCoords;
-                    sourceLabel = "United States";
-                    targetLabel = "Japan";
-                } else { // jp-to-us
-                    sourceCoords = jpCoords;
-                    targetCoords = usCoords;
-                    sourceLabel = "Japan";
-                    targetLabel = "United States";
-                }
-            } else { // china-us connection
-                if (arrowDirection === 'us-to-jp') { // we'll interpret this as us-to-cn 
-                    sourceCoords = usCoords;
-                    targetCoords = cnCoords;
-                    sourceLabel = "United States";
-                    targetLabel = "China";
-                } else { // cn-to-us
-                    sourceCoords = cnCoords;
-                    targetCoords = usCoords;
-                    sourceLabel = "China";
-                    targetLabel = "United States";
-                }
-            }
+            // Add bubbles with animations
+            bubbleGroup.selectAll('circle')
+                .data(bubbleData)
+                .enter()
+                .append('circle')
+                .attr('cx', d => projection(d.coordinates)[0])
+                .attr('cy', d => projection(d.coordinates)[1])
+                .attr('r', 0) // Start with radius 0 for animation
+                .attr('fill', d => {
+                    // Use different colors based on value ranges
+                    const normalized = (d.value - valueExtent[0]) / (valueExtent[1] - valueExtent[0]);
+                    if (normalized < 0.33) return 'rgba(74, 222, 128, 0.6)'; // Green for low values
+                    if (normalized < 0.66) return 'rgba(250, 204, 21, 0.6)'; // Yellow for medium values
+                    return 'rgba(248, 113, 113, 0.6)'; // Red for high values
+                })
+                .attr('stroke', d => {
+                    // Matching darker stroke colors
+                    const normalized = (d.value - valueExtent[0]) / (valueExtent[1] - valueExtent[0]);
+                    if (normalized < 0.33) return '#16a34a'; // Darker green
+                    if (normalized < 0.66) return '#ca8a04'; // Darker yellow
+                    return '#dc2626'; // Darker red
+                })
+                .attr('stroke-width', 2)
+                .attr('filter', 'url(#glow)')
+                .attr('opacity', 0.8)
+                .on('mouseover', function (e, d) {
+                    // Highlight bubble on hover
+                    d3.select(this)
+                        .attr('stroke-width', 3)
+                        .attr('opacity', 1);
 
-            // Create connection points and define the connections we want to draw
-            const connections = [
-                {
-                    source: sourceCoords,
-                    target: targetCoords,
-                    sourceLabel: sourceLabel,
-                    targetLabel: targetLabel
-                }
-            ];
+                    // Show tooltip
+                    setTooltipContent(`${d.country}: ${d.value} ${getMetricLabel()}`);
+                    setTooltipPosition({ x: e.pageX, y: e.pageY });
+                    setShowTooltip(true);
+                })
+                .on('mouseout', function () {
+                    // Reset bubble appearance
+                    d3.select(this)
+                        .attr('stroke-width', 2)
+                        .attr('opacity', 0.8);
 
-            // Create a group for connections
-            const connectionsGroup = svg.append('g')
-                .attr('class', 'connections');
+                    // Hide tooltip
+                    setShowTooltip(false);
+                })
+                .transition()
+                .duration(1000)
+                .attr('r', d => bubbleScale(d.value));
 
-            // Create curved connection paths with gradients and arrows
-            connections.forEach(conn => {
-                // Update gradient coordinates for this specific connection
-                outlineGradient
-                    .attr("x1", conn.source[0])
-                    .attr("y1", conn.source[1])
-                    .attr("x2", conn.target[0])
-                    .attr("y2", conn.target[1]);
+            // Add country labels near bubbles
+            bubbleGroup.selectAll('text')
+                .data(bubbleData)
+                .enter()
+                .append('text')
+                .attr('x', d => projection(d.coordinates)[0])
+                .attr('y', d => projection(d.coordinates)[1] + bubbleScale(d.value) + 10)
+                .attr('text-anchor', 'middle')
+                .attr('font-family', 'Helvetica, Arial, sans-serif')
+                .attr('font-size', '10px')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#333')
+                .text(d => d.country)
+                .each(function (d) {
+                    // Create a background for the text for better readability
+                    const bbox = this.getBBox();
+                    const padding = 2;
 
-                // Calculate control point for the curved path
-                const dx = conn.target[0] - conn.source[0];
-                const dy = conn.target[1] - conn.source[1];
-                const dr = Math.sqrt(dx * dx + dy * dy);
-
-                // Determine if we should curve up or down based on connection direction
-                const curveDirection = dx > 0 ? -1 : 1; // Curve up if going east, down if going west
-
-                // Calculate control points for a quadratic curve
-                const cpX = (conn.source[0] + conn.target[0]) / 2;
-                const cpY = (conn.source[1] + conn.target[1]) / 2 + (curveDirection * dr * 0.2);
-
-                // Create the SVG path for a quadratic Bezier curve
-                const pathData = `M${conn.source[0]},${conn.source[1]} Q${cpX},${cpY} ${conn.target[0]},${conn.target[1]}`;
-
-                // Generate points for the tapered path
-                const generateTaperedPath = () => {
-                    const segments = 100; // Number of segments to create smooth taper
-                    const startWidth = 1; // Width at the source (thinner)
-                    const endWidth = 10;   // Width at the target (thicker)
-                    const path = [];
-
-                    // Generate points for the top edge of the path
-                    for (let i = 0; i <= segments; i++) {
-                        const t = i / segments;
-                        // Quadratic Bezier equation: (1-t)²P₀ + 2(1-t)tP₁ + t²P₂
-                        const x = Math.pow(1 - t, 2) * conn.source[0] +
-                            2 * (1 - t) * t * cpX +
-                            Math.pow(t, 2) * conn.target[0];
-                        const y = Math.pow(1 - t, 2) * conn.source[1] +
-                            2 * (1 - t) * t * cpY +
-                            Math.pow(t, 2) * conn.target[1];
-
-                        // Calculate the current width based on position
-                        const width = startWidth + (endWidth - startWidth) * t;
-
-                        // Calculate normal vector to the curve at this point
-                        // Derivative of quadratic Bezier curve: 2(1-t)(P₁-P₀) + 2t(P₂-P₁)
-                        const dx = 2 * (1 - t) * (cpX - conn.source[0]) + 2 * t * (conn.target[0] - cpX);
-                        const dy = 2 * (1 - t) * (cpY - conn.source[1]) + 2 * t * (conn.target[1] - cpY);
-
-                        // Normalize the derivative
-                        const length = Math.sqrt(dx * dx + dy * dy);
-                        const nx = -dy / length; // Normal x component (perpendicular to tangent)
-                        const ny = dx / length;  // Normal y component
-
-                        // Points for top and bottom edges
-                        const halfWidth = width / 2;
-                        path.push({
-                            t: t,
-                            top: [x + nx * halfWidth, y + ny * halfWidth],
-                            bottom: [x - nx * halfWidth, y - ny * halfWidth],
-                            center: [x, y]
-                        });
-                    }
-
-                    return path;
-                };
-
-                const taperedPoints = generateTaperedPath();
-
-                // Create SVG path commands for the tapered shape
-                let taperedPathData = `M${taperedPoints[0].top[0]},${taperedPoints[0].top[1]}`;
-
-                // Add all points for the top side
-                for (let i = 1; i < taperedPoints.length; i++) {
-                    taperedPathData += ` L${taperedPoints[i].top[0]},${taperedPoints[i].top[1]}`;
-                }
-
-                // Reverse through points for bottom side
-                for (let i = taperedPoints.length - 1; i >= 0; i--) {
-                    taperedPathData += ` L${taperedPoints[i].bottom[0]},${taperedPoints[i].bottom[1]}`;
-                }
-
-                // Close the path
-                taperedPathData += ' Z';
-
-                // Create the tapered path with gradient fill
-                const taperedPath = connectionsGroup.append('path')
-                    .attr('d', taperedPathData)
-                    .attr('fill', 'url(#outline-gradient)')
-                    .attr('stroke', 'none')
-                    .attr('opacity', 0.7);
-
-                // Create the center line - thinner black line along the center of the tapered path
-                const centerLineData = taperedPoints.map(p => `${p.center[0]},${p.center[1]}`).join(' L');
-                const centerLine = connectionsGroup.append('path')
-                    .attr('d', `M${centerLineData}`)
-                    .attr('fill', 'none')
-                    .attr('stroke', '#000000')
-                    .attr('stroke-width', 1.5)
-                    .attr('marker-end', 'url(#arrow)');
-
-                // Add country labels with seamless white background
-                const addCountryLabel = (x, y, text) => {
-                    // Create a group for the text and background
-                    const labelGroup = connectionsGroup.append('g');
-
-                    // Create a background measurement text element to calculate width
-                    const measureText = labelGroup.append('text')
-                        .attr('font-family', 'Helvetica, Arial, sans-serif')
-                        .attr('font-size', '12px')
-                        .attr('font-weight', 'bold')
-                        .text(text)
-                        .attr('visibility', 'hidden'); // Hide it, just for measurement
-
-                    // Calculate text dimensions
-                    let textWidth, textHeight;
-                    try {
-                        const bbox = measureText.node().getBBox();
-                        textWidth = bbox.width;
-                        textHeight = bbox.height;
-                        measureText.remove(); // Remove the measurement element
-                    } catch (e) {
-                        // Fallback if getBBox fails
-                        textWidth = text.length * 7;
-                        textHeight = 12;
-                        if (measureText) measureText.remove();
-                    }
-
-                    // Add extra padding
-                    const padding = 4;
-
-                    // Create white background with no border and slight blur for a smoother effect
-                    labelGroup.append('rect')
-                        .attr('x', x - (textWidth / 2) - padding)
-                        .attr('y', y - (textHeight / 2) - padding)
-                        .attr('width', textWidth + (padding * 2))
-                        .attr('height', textHeight + (padding * 2))
-                        .attr('rx', 4) // Rounded corners
-                        .attr('ry', 4)
+                    const rect = bubbleGroup.insert('rect', 'text')
+                        .attr('x', bbox.x - padding)
+                        .attr('y', bbox.y - padding)
+                        .attr('width', bbox.width + (padding * 2))
+                        .attr('height', bbox.height + (padding * 2))
                         .attr('fill', 'white')
-                        .attr('stroke', 'none') // No border
-                        .attr('filter', 'blur(1px)'); // Slight blur for softer edges
+                        .attr('opacity', 0.7)
+                        .attr('rx', 2);
+                });
 
-                    // Create text element with Helvetica font
-                    labelGroup.append('text')
-                        .attr('x', x)
-                        .attr('y', y) // Exactly at the connection point where node was
-                        .attr('text-anchor', 'middle')
-                        .attr('dominant-baseline', 'middle') // Center vertically too
-                        .attr('font-family', 'Helvetica, Arial, sans-serif')
-                        .attr('font-size', '12px')
-                        .attr('font-weight', 'bold')
-                        .attr('pointer-events', 'none') // Prevent interfering with mouse events
-                        .attr('fill', '#000')
-                        .text(text);
-                };
+            // Add legend
+            const legendGroup = svg.append('g')
+                .attr('class', 'legend')
+                .attr('transform', `translate(20, ${viewH - 120})`);
 
-                // Add labels for source and target at exact connection points
-                addCountryLabel(conn.source[0], conn.source[1], conn.sourceLabel);
-                addCountryLabel(conn.target[0], conn.target[1], conn.targetLabel);
+            // Legend background
+            legendGroup.append('rect')
+                .attr('x', -10)
+                .attr('y', -15)
+                .attr('width', 250)
+                .attr('height', 110)
+                .attr('fill', 'white')
+                .attr('opacity', 0.9)
+                .attr('rx', 5)
+                .attr('ry', 5)
+                .attr('stroke', '#d1d5db')
+                .attr('stroke-width', 1);
+
+            // Legend title
+            legendGroup.append('text')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('font-family', 'Helvetica, Arial, sans-serif')
+                .attr('font-size', '14px')
+                .attr('font-weight', 'bold')
+                .text(getMetricLabel());
+
+            // Legend bubbles - use the same color scheme as the bubbles
+            const legendValues = [valueExtent[0], (valueExtent[0] + valueExtent[1]) / 2, valueExtent[1]];
+
+            legendValues.forEach((value, i) => {
+                const cy = 40;
+                const cx = i * 80 + 30;
+
+                // Calculate normalized value for color
+                const normalized = (value - valueExtent[0]) / (valueExtent[1] - valueExtent[0]);
+                let fillColor, strokeColor;
+
+                if (normalized < 0.33) {
+                    fillColor = 'rgba(74, 222, 128, 0.6)';
+                    strokeColor = '#16a34a';
+                } else if (normalized < 0.66) {
+                    fillColor = 'rgba(250, 204, 21, 0.6)';
+                    strokeColor = '#ca8a04';
+                } else {
+                    fillColor = 'rgba(248, 113, 113, 0.6)';
+                    strokeColor = '#dc2626';
+                }
+
+                // Add bubble
+                legendGroup.append('circle')
+                    .attr('cx', cx)
+                    .attr('cy', cy)
+                    .attr('r', bubbleScale(value))
+                    .attr('fill', fillColor)
+                    .attr('stroke', strokeColor)
+                    .attr('stroke-width', 2);
+
+                // Add value label
+                legendGroup.append('text')
+                    .attr('x', cx)
+                    .attr('y', cy + bubbleScale(value) + 15)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-family', 'Helvetica, Arial, sans-serif')
+                    .attr('font-size', '12px')
+                    .text(value);
             });
-
-            // Removed connection info text that was previously displayed at the bottom of the map
 
             setIsLoading(false);
         } catch (err) {
@@ -435,19 +387,9 @@ const WorldMap = ({ theme = 'default', arrowDirection = 'us-to-jp', selectedData
         borderRadius: '4px',
         fontSize: '14px',
         pointerEvents: 'none',
-        opacity: 0, // Always hide tooltip
+        opacity: showTooltip ? 1 : 0,
         transition: 'opacity 0.2s',
         zIndex: 1000
-    };
-
-    // Toggle connection function - simply notify parent instead of managing internal state
-    const toggleConnection = () => {
-        if (onConnectionTypeChange) {
-            const newType = connectionType === 'japan-us' ? 'china-us' : 'japan-us';
-            // We don't update state here anymore, just notify the parent
-            onConnectionTypeChange(newType);
-            console.log("Notifying parent to toggle connection type to:", newType);
-        }
     };
 
     return (
