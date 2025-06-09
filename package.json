@@ -2,7 +2,7 @@
   "name": "world-map",
   "version": "1.0.0",
   "main": "index.js",
-  "homepage": "https://nssokada.github.io/QuadJapan_HumanoidRobot/",
+  "homepage": "https://akiranishii.github.io/QuadJapan_HumanoidRobot/",
   "scripts": {
     "start": "webpack serve",
     "build": "webpack --mode=production && rm -rf docs && mkdir docs && cp -r dist/* docs",
