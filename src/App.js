@@ -1,14 +1,341 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WorldMap from './WorldMap';
+import Papa from 'papaparse';
 
 function App() {
-    // State for category selection
+    // State for category, subcategory, country selection, and view mode
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [selectedSubcategory, setSelectedSubcategory] = useState('All');
+    const [selectedCountries, setSelectedCountries] = useState(['All']); // Array to support multi-select
+    const [viewMode, setViewMode] = useState('map'); // 'map' or 'table'
+    const [availableSubcategories, setAvailableSubcategories] = useState([]);
+    const [availableCountries, setAvailableCountries] = useState([]);
+    const [data, setData] = useState([]);
+
+    // Load data once on component mount to get subcategories and countries
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const response = await fetch('/data/full_dataset.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                const parsedData = Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true
+                });
+
+                setData(parsedData.data);
+                
+                // Extract unique subcategories
+                const subcategories = [...new Set(
+                    parsedData.data
+                        .map(item => item['Products Grouped'])
+                        .filter(Boolean)
+                )].sort();
+                
+                setAvailableSubcategories(subcategories);
+
+                // Extract unique countries
+                const countries = [...new Set(
+                    parsedData.data
+                        .map(item => item.Country)
+                        .filter(Boolean)
+                )].sort();
+                
+                setAvailableCountries(countries);
+            } catch (error) {
+                console.error('Error loading data for subcategories and countries:', error);
+                // Fallback subcategories
+                setAvailableSubcategories([
+                    'AI & Software',
+                    'Automation Software', 
+                    'Semiconductor & Compute',
+                    'Sensors/Electronics',
+                    'Industrial/Automation',
+                    'Energy & Power',
+                    'Mechanical & Motion',
+                    'Automotive/Transportation',
+                    'Consumer/Internet',
+                    'Robotics'
+                ]);
+                
+                // Fallback countries
+                setAvailableCountries([
+                    'Canada', 'China', 'France', 'Germany', 'Japan', 
+                    'Korea', 'Sweden', 'Switzerland', 'Taiwan', 'UK', 'USA'
+                ]);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    // Get filtered subcategories based on selected category and countries
+    const getFilteredSubcategories = () => {
+        if (selectedCategory === 'All') {
+            return availableSubcategories;
+        }
+        
+        // Filter subcategories based on the selected category and countries
+        let filteredData = data.filter(item => item.Category === selectedCategory);
+        
+        // Further filter by selected countries if not "All"
+        if (!selectedCountries.includes('All')) {
+            filteredData = filteredData.filter(item => 
+                selectedCountries.includes(item.Country)
+            );
+        }
+            
+        const categoryFiltered = filteredData
+            .map(item => item['Products Grouped'])
+            .filter(Boolean);
+            
+        return [...new Set(categoryFiltered)].sort();
+    };
 
     // Event handler for category change
     const handleCategoryChange = (event) => {
         console.log('Selected Category:', event.target.value);
         setSelectedCategory(event.target.value);
+        // Reset subcategory when category changes
+        setSelectedSubcategory('All');
+    };
+
+    // Event handler for subcategory change
+    const handleSubcategoryChange = (event) => {
+        console.log('Selected Subcategory:', event.target.value);
+        setSelectedSubcategory(event.target.value);
+    };
+
+    // Event handler for country selection change
+    const handleCountryChange = (event) => {
+        const value = event.target.value;
+        console.log('Country selection changed:', value);
+        
+        if (value === 'All') {
+            setSelectedCountries(['All']);
+        } else {
+            setSelectedCountries(prev => {
+                // Remove 'All' if it's selected and we're adding a specific country
+                const withoutAll = prev.filter(country => country !== 'All');
+                
+                if (withoutAll.includes(value)) {
+                    // Remove the country if it's already selected
+                    const updated = withoutAll.filter(country => country !== value);
+                    // If no countries left, default to 'All'
+                    return updated.length === 0 ? ['All'] : updated;
+                } else {
+                    // Add the country
+                    return [...withoutAll, value];
+                }
+            });
+        }
+        
+        // Reset subcategory when countries change
+        setSelectedSubcategory('All');
+    };
+
+    // Function to clear all country selections (reset to All)
+    const clearCountrySelection = () => {
+        setSelectedCountries(['All']);
+        setSelectedSubcategory('All');
+    };
+
+    // Generate matrix data for table view
+    const generateMatrixData = () => {
+        if (!data.length) return { matrix: {}, subcategories: [], countries: [], countryTotals: {} };
+
+        // Filter data based on current selections (but ignore subcategory for matrix)
+        let filteredData = selectedCategory === 'All'
+            ? data
+            : data.filter(item => item.Category === selectedCategory);
+
+        // Apply country filter
+        if (!selectedCountries.includes('All')) {
+            filteredData = filteredData.filter(item => 
+                selectedCountries.includes(item.Country)
+            );
+        }
+
+        // Get unique subcategories from filtered data
+        const subcategories = [...new Set(
+            filteredData
+                .map(item => item['Products Grouped'])
+                .filter(Boolean)
+        )].sort();
+
+        // Get countries and calculate total company count for each
+        const baseCountries = selectedCountries.includes('All') 
+            ? availableCountries 
+            : selectedCountries;
+
+        // Calculate total unique companies per country
+        const countryTotals = {};
+        baseCountries.forEach(country => {
+            const companies = new Set();
+            filteredData
+                .filter(item => item.Country === country)
+                .forEach(item => companies.add(item.Company));
+            countryTotals[country] = companies.size;
+        });
+
+        // Sort countries by total company count (descending)
+        const countries = baseCountries.sort((a, b) => countryTotals[b] - countryTotals[a]);
+
+        // Create matrix: subcategory -> country -> company count
+        const matrix = {};
+        
+        subcategories.forEach(subcategory => {
+            matrix[subcategory] = {};
+            countries.forEach(country => {
+                // Count unique companies in this subcategory and country
+                const companies = new Set();
+                filteredData
+                    .filter(item => 
+                        item['Products Grouped'] === subcategory && 
+                        item.Country === country
+                    )
+                    .forEach(item => companies.add(item.Company));
+                
+                matrix[subcategory][country] = companies.size;
+            });
+        });
+
+        return { matrix, subcategories, countries, countryTotals };
+    };
+
+    // Table view component
+    const TableView = () => {
+        const { matrix, subcategories, countries, countryTotals } = generateMatrixData();
+
+        if (!subcategories.length || !countries.length) {
+            return (
+                <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: '#666',
+                    fontSize: '16px'
+                }}>
+                    No data available for the current filter selection.
+                </div>
+            );
+        }
+
+        return (
+            <div style={{ 
+                padding: '20px', 
+                overflow: 'auto', 
+                height: '100%',
+                backgroundColor: '#f9fafb',
+                paddingBottom: '60px'
+            }}>
+                <div style={{
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    overflow: 'hidden',
+                    marginBottom: '40px'
+                }}>
+                    <div style={{
+                        padding: '16px 20px',
+                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: '#f8f9fa'
+                    }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+                            Company Count Matrix
+                        </h3>
+                        <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>
+                            Number of companies by product group and country
+                        </p>
+                    </div>
+                    
+                    <div style={{ overflow: 'auto', maxHeight: 'calc(100vh - 350px)' }}>
+                        <table style={{
+                            width: '100%',
+                            borderCollapse: 'collapse',
+                            fontSize: '14px'
+                        }}>
+                            <thead>
+                                <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                    <th style={{
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontWeight: '600',
+                                        borderBottom: '2px solid #e5e7eb',
+                                        position: 'sticky',
+                                        left: 0,
+                                        backgroundColor: '#f8f9fa',
+                                        zIndex: 10,
+                                        minWidth: '200px'
+                                    }}>
+                                        Product Group
+                                    </th>
+                                    {countries.map(country => (
+                                        <th key={country} style={{
+                                            padding: '12px 16px',
+                                            textAlign: 'center',
+                                            fontWeight: '600',
+                                            borderBottom: '2px solid #e5e7eb',
+                                            minWidth: '80px'
+                                        }}>
+                                            <div>{country}</div>
+                                            <div style={{ 
+                                                fontSize: '12px', 
+                                                fontWeight: '400', 
+                                                color: '#666',
+                                                marginTop: '2px'
+                                            }}>
+                                                ({countryTotals[country]} total)
+                                            </div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {subcategories.map((subcategory, index) => (
+                                    <tr key={subcategory} style={{
+                                        backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb'
+                                    }}>
+                                        <td style={{
+                                            padding: '12px 16px',
+                                            fontWeight: '500',
+                                            borderBottom: '1px solid #e5e7eb',
+                                            position: 'sticky',
+                                            left: 0,
+                                            backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb',
+                                            zIndex: 5
+                                        }}>
+                                            {subcategory}
+                                        </td>
+                                        {countries.map(country => {
+                                            const count = matrix[subcategory][country] || 0;
+                                            return (
+                                                <td key={country} style={{
+                                                    padding: '12px 16px',
+                                                    textAlign: 'center',
+                                                    borderBottom: '1px solid #e5e7eb',
+                                                    color: count === 0 ? '#9ca3af' : '#111827',
+                                                    fontWeight: count > 0 ? '600' : 'normal'
+                                                }}>
+                                                    {count === 0 ? '—' : count}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {/* Bottom spacing to prevent last row cutoff */}
+                    <div style={{ height: '80px' }}></div>
+                </div>
+            </div>
+        );
     };
 
     // Base font style
@@ -60,6 +387,12 @@ function App() {
 
     // Get category description
     const getCategoryDescription = () => {
+        // If a specific subcategory is selected, show its definition
+        if (selectedSubcategory !== 'All') {
+            return getSubcategoryDescription(selectedCategory, selectedSubcategory);
+        }
+
+        // Otherwise show the general category description
         switch (selectedCategory) {
             case 'Brain':
                 return 'Companies focused on software, AI, sensors, and computational hardware';
@@ -72,12 +405,75 @@ function App() {
         }
     };
 
+    // Get subcategory definitions
+    const getSubcategoryDescription = (category, subcategory) => {
+        const subcategoryDefinitions = {
+            'Body': {
+                'Mechanical & Motion': 'Physical components that enable motion or transmit force in robotic systems.',
+                'Mechanical (Cast/Frames)': 'Structural or metallic components that provide the framework of a robot.',
+                'Sensors': 'Hardware modules specifically designed to gather data from the environment.',
+                'Sensors/Electronics': 'Advanced sensor or electronic subsystems, including integrated sensing, capturing, or control boards.',
+                'Energy & Power': 'Components that store or supply power for robotic operations.',
+                'Industrial/Automation': 'Broad or integrated hardware solutions used in industrial or automated manufacturing contexts.',
+                'Electronics': 'General or broad electronic components that may not be specialized sensors or semiconductors.',
+                'Other Systems': 'Miscellaneous or specialized hardware systems that don\'t naturally fit into other groupings.',
+                'Software/Simulation': 'Software tools used to simulate mechanical or system-level behavior in a robotics context.',
+                'Other': 'Any product within the "Body" category that hasn\'t been explicitly classified above.'
+            },
+            'Brain': {
+                'AI & Software': 'Higher-level software capabilities, from foundational AI models to data analytics.',
+                'Automation Software': 'Software for orchestrating large-scale or complex automation processes.',
+                'Semiconductor & Compute': 'Hardware or IP cores related to chips, memory, or specialized computing engines (like GPUs for AI).',
+                'Sensors/Electronics': 'Electronics or sensor solutions that require specialized processing or semiconductor design.',
+                'Mechanical & Motion': 'Motor-control firmware or integrated driver chips.',
+                'Software/Simulation': 'Simulation or modeling tools specifically for AI, control loops, or digital twins.',
+                'Other': 'Any "Brain" product that doesn\'t neatly fit in the above groups.'
+            },
+            'Integrator': {
+                'Automotive/Transportation': 'Full vehicle or mobility integrators, including traditional cars and new aerial eVTOL concepts.',
+                'Consumer/Internet': 'Companies or products catering to consumer tech, e-commerce, and internet services.',
+                'Mechanical & Motion': 'Integrators or final systems emphasizing mechanical solutions or motion control at a high level.',
+                'Electronics': 'Companies delivering integrated electronic systems or platforms.',
+                'Energy & Power': 'Systems or integrators supplying full-scale energy solutions.',
+                'Robotics': 'Broad integrators that deliver complete robotic solutions (hardware + software).',
+                'Telecommunications': 'Communications networks or satellite solutions.',
+                'Semiconductor & Compute': 'Integrators that handle or produce large-scale chip manufacturing or memory at a systems level.',
+                'Sensors/Electronics': 'Final integrators focusing on sensor solutions or advanced electronics.',
+                'Other': 'Any "Integrator" product not placed into a main grouping.'
+            }
+        };
+
+        // Return the specific subcategory definition, or a fallback if not found
+        return subcategoryDefinitions[category]?.[subcategory] || 
+               `${subcategory} products within the ${category} category`;
+    };
+
+    // Get current view description
+    const getCurrentViewDescription = () => {
+        let description = selectedCategory;
+        if (selectedSubcategory !== 'All') {
+            description += ` → ${selectedSubcategory}`;
+        }
+        
+        // Add country information
+        if (!selectedCountries.includes('All')) {
+            const countryText = selectedCountries.length === 1 
+                ? selectedCountries[0]
+                : `${selectedCountries.length} countries (${selectedCountries.slice(0, 2).join(', ')}${selectedCountries.length > 2 ? '...' : ''})`;
+            description += ` | ${countryText}`;
+        }
+        
+        return description;
+    };
+
+    const filteredSubcategories = getFilteredSubcategories();
+
     return (
         <div className="App" style={appStyle}>
             <header style={headerStyle}>
-                <h1>Global Robotics Companies Visualization</h1>
+                <h1>Humanoid Robot Value Chain</h1>
                 <p style={{ margin: '5px 0 0', color: '#666' }}>
-                    Market capitalization data for individual robotics companies by category and country
+                    Market capitalization data for individual robotics companies by category, product group, and country
                 </p>
             </header>
 
@@ -97,8 +493,95 @@ function App() {
                     </select>
                 </div>
 
+                <div>
+                    <span style={labelStyle}>Product Group:</span>
+                    <select
+                        style={selectStyle}
+                        value={selectedSubcategory}
+                        onChange={handleSubcategoryChange}
+                        disabled={filteredSubcategories.length === 0}
+                    >
+                        <option value="All">All Product Groups</option>
+                        {filteredSubcategories.map(subcategory => (
+                            <option key={subcategory} value={subcategory}>
+                                {subcategory}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <span style={labelStyle}>Countries:</span>
+                    <select
+                        style={selectStyle}
+                        value="" // Always empty to allow repeated selections
+                        onChange={handleCountryChange}
+                    >
+                        <option value="">Select countries...</option>
+                        <option value="All">All Countries</option>
+                        {availableCountries.map(country => (
+                            <option key={country} value={country}>
+                                {country} {selectedCountries.includes(country) ? '✓' : ''}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Country selection display and clear button */}
+                {!selectedCountries.includes('All') && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ 
+                            padding: '4px 8px', 
+                            backgroundColor: '#e3f2fd', 
+                            borderRadius: '4px', 
+                            fontSize: '12px',
+                            border: '1px solid #90caf9'
+                        }}>
+                            {selectedCountries.length === 1 
+                                ? selectedCountries[0]
+                                : `${selectedCountries.length} countries selected`
+                            }
+                        </div>
+                        <button
+                            onClick={clearCountrySelection}
+                            style={{
+                                padding: '2px 6px',
+                                fontSize: '12px',
+                                backgroundColor: '#f44336',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: 'pointer'
+                            }}
+                            title="Clear country selection"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                )}
+
                 <div style={{ marginLeft: 'auto', fontSize: '14px' }}>
-                    <strong>Current View:</strong> {selectedCategory} - {getCategoryDescription()}
+                    <strong>Current View:</strong> {getCurrentViewDescription()} - {getCategoryDescription()}
+                </div>
+
+                {/* View Toggle Button */}
+                <div style={{ marginLeft: '15px' }}>
+                    <button
+                        onClick={() => setViewMode(viewMode === 'map' ? 'table' : 'map')}
+                        style={{
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            backgroundColor: viewMode === 'map' ? '#2563eb' : '#16a34a',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                        }}
+                        title={`Switch to ${viewMode === 'map' ? 'table' : 'map'} view`}
+                    >
+                        {viewMode === 'map' ? 'Show Table' : 'Show Map'}
+                    </button>
                 </div>
             </div>
 
@@ -110,7 +593,10 @@ function App() {
                 fontSize: '14px'
             }}>
                 <p style={{ margin: 0 }}>
-                    <strong>How to use:</strong> Hover over bubbles to see details about individual companies.
+                    <strong>How to use:</strong> Select category, product group, and countries to filter companies. 
+                    Click on countries multiple times to select/deselect them for comparison.
+                    Use the <strong>Show Table</strong> button to view a matrix that highlights gaps (countries with 0 companies in specific areas).
+                    In map view: Hover over bubbles to see company details. 
                     Each bubble represents a company, with size indicating market capitalization.
                     Colors indicate company category: <span style={{ color: '#dc2626' }}>Brain</span> (red),
                     <span style={{ color: '#16a34a' }}> Body</span> (green), or
@@ -118,9 +604,17 @@ function App() {
                 </p>
             </div>
 
-            {/* Full Page Map Container */}
+            {/* Main Content Container */}
             <div style={mapContainerStyle}>
-                <WorldMap selectedCategory={selectedCategory} />
+                {viewMode === 'map' ? (
+                    <WorldMap 
+                        selectedCategory={selectedCategory} 
+                        selectedSubcategory={selectedSubcategory}
+                        selectedCountries={selectedCountries}
+                    />
+                ) : (
+                    <TableView />
+                )}
             </div>
         </div>
     );

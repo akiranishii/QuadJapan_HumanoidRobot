@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import Papa from 'papaparse';
 
-const WorldMap = ({ selectedCategory }) => {
+const WorldMap = ({ selectedCategory, selectedSubcategory, selectedCountries }) => {
     const svgRef = useRef(null);
     const [tooltipContent, setTooltipContent] = useState('');
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -29,110 +29,66 @@ const WorldMap = ({ selectedCategory }) => {
             setIsLoading(true);
 
             try {
-                // Try multiple possible paths for the CSV file
-                const paths = [
-                    './public/data/full_dataset.csv',
-                    '../data/full_dataset.csv',
-                    './data/full_dataset.csv',
-                    '/data/full_dataset.csv',
-                    'full_dataset.csv',
-                    // Add the path that matches your project structure
-                    '/public/data/full_dataset.csv'
-                ];
-
-                let fileContent = null;
-                let loadError = null;
-                let successPath = null;
-
-                // Try each path until we successfully load the file
-                for (const path of paths) {
-                    try {
-                        console.log(`Attempting to load from: ${path}`);
-                        fileContent = await window.fs.readFile(path, { encoding: 'utf8' });
-                        successPath = path;
-                        console.log(`Successfully loaded from: ${path}`);
-                        break; // Exit the loop if successful
-                    } catch (err) {
-                        loadError = err;
-                        console.warn(`Failed to load from ${path}:`, err.message);
-                    }
+                // Load CSV from public directory using fetch
+                const response = await fetch('/data/full_dataset.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
-                if (!fileContent) {
-                    console.warn('Using fallback data as CSV could not be loaded');
-                    // Create sample fallback data so the visualization still works
-                    const fallbackData = [
-                        { "Company": "Palantir", "Country": "USA", "Mkt Cap ($mn)": 236526, "Category": "Brain" },
-                        { "Company": "Oracle", "Country": "USA", "Mkt Cap ($mn)": 469582, "Category": "Brain" },
-                        { "Company": "Microsoft", "Country": "USA", "Mkt Cap ($mn)": 3065550, "Category": "Brain" },
-                        { "Company": "NVIDIA", "Country": "USA", "Mkt Cap ($mn)": 2905739, "Category": "Brain" },
-                        { "Company": "TSMC", "Country": "Taiwan", "Mkt Cap ($mn)": 1058181, "Category": "Brain" },
-                        { "Company": "Samsung", "Country": "Korea", "Mkt Cap ($mn)": 244701, "Category": "Brain" },
-                        { "Company": "Siemens", "Country": "Germany", "Mkt Cap ($mn)": 164454, "Category": "Brain" },
-                        { "Company": "Honeywell", "Country": "USA", "Mkt Cap ($mn)": 145963, "Category": "Body" },
-                        { "Company": "Timken", "Country": "USA", "Mkt Cap ($mn)": 5533, "Category": "Body" },
-                        { "Company": "CATL", "Country": "China", "Mkt Cap ($mn)": 155380, "Category": "Body" },
-                        { "Company": "Nidec", "Country": "Japan", "Mkt Cap ($mn)": 19028, "Category": "Body" },
-                        { "Company": "Tesla", "Country": "USA", "Mkt Cap ($mn)": 1261551, "Category": "Integrator" },
-                        { "Company": "Apple", "Country": "USA", "Mkt Cap ($mn)": 3497145, "Category": "Integrator" },
-                        { "Company": "Tencent", "Country": "China", "Mkt Cap ($mn)": 491611, "Category": "Integrator" },
-                        { "Company": "Toyota", "Country": "Japan", "Mkt Cap ($mn)": 243296, "Category": "Integrator" },
-                        { "Company": "ABB", "Country": "Switzerland", "Mkt Cap ($mn)": 100438, "Category": "Integrator" }
-                    ];
-                    setData(fallbackData);
-                    renderMap(fallbackData);
-                    return;
-                }
-
-                const parsedData = Papa.parse(fileContent, {
+                
+                const csvText = await response.text();
+                
+                const parsedData = Papa.parse(csvText, {
                     header: true,
                     dynamicTyping: true,
                     skipEmptyLines: true
                 });
 
-                console.log(`Loaded ${parsedData.data.length} records from dataset at ${successPath}`);
+                console.log(`Loaded ${parsedData.data.length} records from CSV dataset`);
+                console.log('Sample data:', parsedData.data.slice(0, 3));
+                
                 setData(parsedData.data);
-                renderMap(parsedData.data);
+                // Don't call renderMap directly here - let the useEffect handle it
             } catch (error) {
-                console.error('Error loading data:', error);
+                console.error('Error loading CSV data:', error);
 
-                // Create fallback data if there's an error
+                // Create fallback data if there's an error - updated to include Products Grouped
                 console.warn('Using fallback data due to error:', error.message);
                 const fallbackData = [
-                    { "Company": "Palantir", "Country": "USA", "Mkt Cap ($mn)": 236526, "Category": "Brain" },
-                    { "Company": "Oracle", "Country": "USA", "Mkt Cap ($mn)": 469582, "Category": "Brain" },
-                    { "Company": "Microsoft", "Country": "USA", "Mkt Cap ($mn)": 3065550, "Category": "Brain" },
-                    { "Company": "NVIDIA", "Country": "USA", "Mkt Cap ($mn)": 2905739, "Category": "Brain" },
-                    { "Company": "TSMC", "Country": "Taiwan", "Mkt Cap ($mn)": 1058181, "Category": "Brain" },
-                    { "Company": "Samsung", "Country": "Korea", "Mkt Cap ($mn)": 244701, "Category": "Brain" },
-                    { "Company": "Siemens", "Country": "Germany", "Mkt Cap ($mn)": 164454, "Category": "Brain" },
-                    { "Company": "Honeywell", "Country": "USA", "Mkt Cap ($mn)": 145963, "Category": "Body" },
-                    { "Company": "Timken", "Country": "USA", "Mkt Cap ($mn)": 5533, "Category": "Body" },
-                    { "Company": "CATL", "Country": "China", "Mkt Cap ($mn)": 155380, "Category": "Body" },
-                    { "Company": "Nidec", "Country": "Japan", "Mkt Cap ($mn)": 19028, "Category": "Body" },
-                    { "Company": "Tesla", "Country": "USA", "Mkt Cap ($mn)": 1261551, "Category": "Integrator" },
-                    { "Company": "Apple", "Country": "USA", "Mkt Cap ($mn)": 3497145, "Category": "Integrator" },
-                    { "Company": "Tencent", "Country": "China", "Mkt Cap ($mn)": 491611, "Category": "Integrator" },
-                    { "Company": "Toyota", "Country": "Japan", "Mkt Cap ($mn)": 243296, "Category": "Integrator" },
-                    { "Company": "ABB", "Country": "Switzerland", "Mkt Cap ($mn)": 100438, "Category": "Integrator" }
+                    { "Company": "Palantir", "Country": "USA", "Mkt Cap ($mn)": 236526, "Category": "Brain", "Product": "Data Science & Analytics", "Products Grouped": "AI & Software" },
+                    { "Company": "Oracle", "Country": "USA", "Mkt Cap ($mn)": 469582, "Category": "Brain", "Product": "Data Science & Analytics", "Products Grouped": "AI & Software" },
+                    { "Company": "Microsoft", "Country": "USA", "Mkt Cap ($mn)": 3065550, "Category": "Brain", "Product": "Foundational Models", "Products Grouped": "AI & Software" },
+                    { "Company": "NVIDIA", "Country": "USA", "Mkt Cap ($mn)": 2905739, "Category": "Brain", "Product": "Semis (Compute)", "Products Grouped": "Semiconductor & Compute" },
+                    { "Company": "TSMC", "Country": "Taiwan", "Mkt Cap ($mn)": 1058181, "Category": "Brain", "Product": "Semis (Fab)", "Products Grouped": "Semiconductor & Compute" },
+                    { "Company": "Samsung", "Country": "Korea", "Mkt Cap ($mn)": 244701, "Category": "Brain", "Product": "Semis (Memory)", "Products Grouped": "Semiconductor & Compute" },
+                    { "Company": "Siemens", "Country": "Germany", "Mkt Cap ($mn)": 164454, "Category": "Brain", "Product": "Diversified Automation", "Products Grouped": "Automation Software" },
+                    { "Company": "Honeywell", "Country": "USA", "Mkt Cap ($mn)": 145963, "Category": "Body", "Product": "Diversified Automation", "Products Grouped": "Industrial/Automation" },
+                    { "Company": "CATL", "Country": "China", "Mkt Cap ($mn)": 155380, "Category": "Body", "Product": "Batteries (Complete)", "Products Grouped": "Energy & Power" },
+                    { "Company": "Nidec", "Country": "Japan", "Mkt Cap ($mn)": 19028, "Category": "Body", "Product": "Motors", "Products Grouped": "Mechanical & Motion" },
+                    { "Company": "Tesla", "Country": "USA", "Mkt Cap ($mn)": 1261551, "Category": "Integrator", "Product": "Autos", "Products Grouped": "Automotive/Transportation" },
+                    { "Company": "Apple", "Country": "USA", "Mkt Cap ($mn)": 3497145, "Category": "Integrator", "Product": "Consumer Electronics", "Products Grouped": "Consumer/Internet" },
+                    { "Company": "Amazon", "Country": "USA", "Mkt Cap ($mn)": 2545426, "Category": "Integrator", "Product": "E-Commerce; Cloud", "Products Grouped": "Consumer/Internet" },
+                    { "Company": "Toyota", "Country": "Japan", "Mkt Cap ($mn)": 243296, "Category": "Integrator", "Product": "Autos", "Products Grouped": "Automotive/Transportation" },
+                    { "Company": "ABB", "Country": "Switzerland", "Mkt Cap ($mn)": 100438, "Category": "Integrator", "Product": "Robotics", "Products Grouped": "Robotics" }
                 ];
                 setData(fallbackData);
-                renderMap(fallbackData);
+                // Don't call renderMap directly here either - let the useEffect handle it
 
                 // Set a warning instead of error
-                setMapError(`Note: Using sample data. Original error: ${error.message}`);
+                setMapError(`Note: Using sample data. Could not load CSV file: ${error.message}`);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         loadData();
     }, []);
 
-    // Re-render map when category changes
+    // Re-render map when category, subcategory, or countries change
     useEffect(() => {
         if (data.length > 0) {
             renderMap(data);
         }
-    }, [selectedCategory, data]);
+    }, [selectedCategory, selectedSubcategory, selectedCountries, data]);
 
     const getThemeColors = () => {
         return {
@@ -159,17 +115,64 @@ const WorldMap = ({ selectedCategory }) => {
         "Switzerland": [8.2275, 46.8182]
     };
 
-    // Get bubble data - modified to show individual companies with improved jittering to avoid overlap
+    // Get bubble data - modified to combine duplicate companies and show comma-separated categories/products
     const getBubbleData = (rawData) => {
         // Filter by category if needed
-        const filteredData = selectedCategory === 'All'
+        let filteredData = selectedCategory === 'All'
             ? rawData
             : rawData.filter(item => item.Category === selectedCategory);
 
-        // Group companies by country first to calculate offsets
-        const countryCounts = {};
+        // Filter by subcategory if needed
+        if (selectedSubcategory && selectedSubcategory !== 'All') {
+            filteredData = filteredData.filter(item => 
+                item['Products Grouped'] === selectedSubcategory
+            );
+        }
+
+        // Filter by countries if needed
+        if (selectedCountries && !selectedCountries.includes('All')) {
+            filteredData = filteredData.filter(item => 
+                selectedCountries.includes(item.Country)
+            );
+        }
+
+        // Group companies by company name and country to combine duplicates
+        const companyGroups = {};
+        
         filteredData.forEach(item => {
-            const country = item.Country;
+            const key = `${item.Company}_${item.Country}`;
+            
+            if (!companyGroups[key]) {
+                companyGroups[key] = {
+                    company: item.Company,
+                    country: item.Country,
+                    value: item['Mkt Cap ($mn)'], // Use the market cap from first occurrence
+                    categories: new Set(),
+                    productsGrouped: new Set(),
+                    products: new Set()
+                };
+            }
+            
+            // Add unique categories, product groups, and products
+            if (item.Category) companyGroups[key].categories.add(item.Category);
+            if (item['Products Grouped']) companyGroups[key].productsGrouped.add(item['Products Grouped']);
+            if (item.Product) companyGroups[key].products.add(item.Product);
+        });
+
+        // Convert sets to sorted comma-separated strings and create final data array
+        const consolidatedData = Object.values(companyGroups).map(group => ({
+            company: group.company,
+            country: group.country,
+            value: group.value,
+            category: Array.from(group.categories).sort().join(', '),
+            productsGrouped: Array.from(group.productsGrouped).sort().join(', '),
+            product: Array.from(group.products).sort().join(', ')
+        }));
+
+        // Group companies by country for positioning
+        const countryCounts = {};
+        consolidatedData.forEach(item => {
+            const country = item.country;
             if (!countryCounts[country]) {
                 countryCounts[country] = 0;
             }
@@ -179,10 +182,10 @@ const WorldMap = ({ selectedCategory }) => {
         // Create a map for company positions to avoid duplicates
         const companyPositions = {};
 
-        // Process each company individually
-        return filteredData.map(item => {
-            const country = item.Country;
-            const companyKey = `${item.Company}_${country}`;
+        // Process each consolidated company
+        return consolidatedData.map(item => {
+            const country = item.country;
+            const companyKey = `${item.company}_${country}`;
 
             // Calculate offset based on country company count
             let offsetX, offsetY;
@@ -191,7 +194,7 @@ const WorldMap = ({ selectedCategory }) => {
                 // Calculate a position around the country center
                 const count = countryCounts[country];
                 const index = Object.keys(companyPositions).filter(key =>
-                    key.endsWith(`_${country}`)
+                    key.includes(`_${country}`)
                 ).length;
 
                 if (count === 1) {
@@ -227,10 +230,11 @@ const WorldMap = ({ selectedCategory }) => {
 
             return {
                 country: country,
-                company: item.Company,
-                value: item['Mkt Cap ($mn)'],
-                category: item.Category,
-                product: item.Product || '',
+                company: item.company,
+                value: item.value,
+                category: item.category,
+                product: item.product,
+                productsGrouped: item.productsGrouped,
                 coordinates: countryCoordinates[country],
                 // Add calculated offset for better positioning
                 displayCoordinates: [
@@ -400,14 +404,21 @@ const WorldMap = ({ selectedCategory }) => {
             }
 
             // ─── Bubble Chart Overlay ────────────────────────────────────────────────
-            // Get bubble data
+            // Get bubble data (this will consolidate companies and apply all filters)
             const bubbleData = getBubbleData(rawData);
+
+            // Check if we have any data after filtering
+            if (bubbleData.length === 0) {
+                console.warn('No companies match the current filter criteria');
+                setIsLoading(false);
+                return;
+            }
 
             // Calculate bubble sizes - scale values to reasonable bubble sizes
             const valueExtent = d3.extent(bubbleData, d => d.value);
             const bubbleScale = d3.scaleSqrt()
                 .domain(valueExtent)
-                .range([10, 60]); // Adjusted for visibility of market cap differences
+                .range([4, 25]); // Reduced from [10, 60] to make circles smaller and differences more subtle
 
             // Create a new group for bubbles
             const bubbleGroup = svg.append('g')
@@ -446,7 +457,7 @@ const WorldMap = ({ selectedCategory }) => {
                         return '#ca8a04'; // Darker yellow
                     }
                 })
-                .attr('stroke-width', 2)
+                .attr('stroke-width', 1.5) // Reduced from 2 to make stroke more subtle
                 .attr('filter', 'url(#glow)')
                 .attr('opacity', 0.7)
                 .on('mouseover', function (event, d) {
@@ -455,21 +466,116 @@ const WorldMap = ({ selectedCategory }) => {
 
                     // Highlight bubble on hover - make it more visible but still semi-transparent
                     d3.select(element)
-                        .attr('stroke-width', 3)
+                        .attr('stroke-width', 2.5) // Reduced from 3
                         .attr('opacity', 0.85);
 
-                    // Show tooltip with company info
-                    const tooltipHTML = `
-                        <strong>${d.company}</strong> (${d.country})<br>
-                        Market Cap: ${formatMarketCap(d.value)}<br>
-                        Category: ${d.category}
-                        ${d.product ? `<br>Product: ${d.product}` : ''}
-                    `;
+                    // Show tooltip with company info including consolidated data
+                    let tooltipHTML = `<strong>${d.company}</strong> (${d.country})<br>`;
+                    tooltipHTML += `Market Cap: ${formatMarketCap(d.value)}<br>`;
+                    
+                    // Handle multiple categories
+                    if (d.category) {
+                        const categoryLabel = d.category.includes(',') ? 'Categories' : 'Category';
+                        tooltipHTML += `${categoryLabel}: ${d.category}<br>`;
+                    }
+                    
+                    // Handle multiple product groups
+                    if (d.productsGrouped) {
+                        const productGroupLabel = d.productsGrouped.includes(',') ? 'Product Groups' : 'Product Group';
+                        tooltipHTML += `${productGroupLabel}: ${d.productsGrouped}<br>`;
+                    }
+                    
+                    // Handle multiple products
+                    if (d.product) {
+                        const productLabel = d.product.includes(',') ? 'Products' : 'Product';
+                        tooltipHTML += `${productLabel}: ${d.product}`;
+                    }
 
                     setTooltipContent(tooltipHTML);
+                    
+                    // Calculate smart tooltip position with comprehensive boundary detection
+                    const mouseX = event.pageX || event.clientX;
+                    const mouseY = event.pageY || event.clientY;
+                    
+                    // Get window dimensions and detect mobile
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+                    const isMobile = windowWidth < 768;
+                    
+                    // Get scroll positions to handle scrolled content
+                    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                    
+                    // Estimate tooltip dimensions more accurately (responsive based on screen size)
+                    const estimatedLines = 5; // Approximate number of lines in tooltip
+                    const lineHeight = isMobile ? 16 : 18;
+                    const tooltipWidth = isMobile ? Math.min(windowWidth - 40, 280) : 320;
+                    const tooltipHeight = estimatedLines * lineHeight + (isMobile ? 20 : 30); // padding
+                    const margin = isMobile ? 12 : 20;
+                    
+                    // Calculate viewport boundaries (accounting for scroll)
+                    const viewportLeft = scrollX;
+                    const viewportRight = scrollX + windowWidth;
+                    const viewportTop = scrollY;
+                    const viewportBottom = scrollY + windowHeight;
+                    
+                    // Start with default positioning (right and above cursor)
+                    let tooltipX = mouseX + margin;
+                    let tooltipY = mouseY - tooltipHeight - margin;
+                    
+                    // Horizontal positioning with comprehensive boundary checks
+                    if (tooltipX + tooltipWidth > viewportRight - margin) {
+                        // Try positioning to the left of cursor
+                        tooltipX = mouseX - tooltipWidth - margin;
+                        
+                        // If still doesn't fit, position against right edge
+                        if (tooltipX < viewportLeft + margin) {
+                            tooltipX = viewportRight - tooltipWidth - margin;
+                        }
+                    }
+                    
+                    // Ensure we don't go off the left edge
+                    if (tooltipX < viewportLeft + margin) {
+                        tooltipX = viewportLeft + margin;
+                    }
+                    
+                    // Vertical positioning with comprehensive boundary checks
+                    if (tooltipY < viewportTop + margin) {
+                        // Try positioning below cursor
+                        tooltipY = mouseY + margin;
+                        
+                        // If that goes off bottom, position against top edge
+                        if (tooltipY + tooltipHeight > viewportBottom - margin) {
+                            tooltipY = viewportTop + margin;
+                        }
+                    }
+                    
+                    // Ensure we don't go off the bottom edge
+                    if (tooltipY + tooltipHeight > viewportBottom - margin) {
+                        tooltipY = viewportBottom - tooltipHeight - margin;
+                    }
+                    
+                    // Final safety check for very small screens
+                    if (isMobile) {
+                        // On mobile, prefer centering horizontally if there's space
+                        if (windowWidth > tooltipWidth + 80) {
+                            const centerX = (windowWidth - tooltipWidth) / 2 + scrollX;
+                            const distanceFromMouse = Math.abs(centerX - mouseX);
+                            
+                            // Only center if mouse is reasonably close to center
+                            if (distanceFromMouse < windowWidth * 0.3) {
+                                tooltipX = centerX;
+                            }
+                        }
+                        
+                        // On mobile, ensure tooltip is not too close to edges
+                        tooltipX = Math.max(viewportLeft + 10, Math.min(tooltipX, viewportRight - tooltipWidth - 10));
+                        tooltipY = Math.max(viewportTop + 10, Math.min(tooltipY, viewportBottom - tooltipHeight - 10));
+                    }
+                    
                     setTooltipPosition({
-                        x: event.pageX || event.clientX,
-                        y: event.pageY || event.clientY
+                        x: tooltipX,
+                        y: tooltipY
                     });
                     setShowTooltip(true);
                 })
@@ -486,23 +592,23 @@ const WorldMap = ({ selectedCategory }) => {
                 .duration(1000)
                 .attr('r', d => bubbleScale(d.value));
 
-            // Add country labels near bubbles
+            // Add company labels near bubbles (changed from country names to company names)
             bubbleGroup.selectAll('text')
                 .data(bubbleData)
                 .enter()
                 .append('text')
                 .attr('x', d => projection(d.displayCoordinates)[0])
-                .attr('y', d => projection(d.displayCoordinates)[1] + bubbleScale(d.value) + 10)
+                .attr('y', d => projection(d.displayCoordinates)[1] + bubbleScale(d.value) + 8) // Reduced offset since circles are smaller
                 .attr('text-anchor', 'middle')
                 .attr('font-family', 'Helvetica, Arial, sans-serif')
-                .attr('font-size', '10px')
+                .attr('font-size', '8px') // Reduced from 10px since circles are smaller
                 .attr('font-weight', 'bold')
                 .attr('fill', '#333')
-                .text(d => d.country)
+                .text(d => d.company) // Changed from d.country to d.company
                 .each(function (d) {
                     // Create a background for the text for better readability
                     const bbox = this.getBBox();
-                    const padding = 2;
+                    const padding = 1.5; // Reduced padding
 
                     const rect = bubbleGroup.insert('rect', 'text')
                         .attr('x', bbox.x - padding)
@@ -511,20 +617,20 @@ const WorldMap = ({ selectedCategory }) => {
                         .attr('height', bbox.height + (padding * 2))
                         .attr('fill', 'white')
                         .attr('opacity', 0.7)
-                        .attr('rx', 2);
+                        .attr('rx', 1.5); // Reduced border radius
                 });
 
-            // Add legend with larger dimensions
+            // Add legend with adjusted dimensions for smaller bubbles
             const legendGroup = svg.append('g')
                 .attr('class', 'legend')
-                .attr('transform', `translate(20, ${viewH - 150})`); // Moved higher up
+                .attr('transform', `translate(20, ${viewH - 120})`); // Adjusted position since bubbles are smaller
 
-            // Legend background with increased width and height
+            // Legend background with adjusted width and height
             legendGroup.append('rect')
                 .attr('x', -15)
                 .attr('y', -20)
-                .attr('width', 350) // Increased from 250
-                .attr('height', 140) // Increased from 110
+                .attr('width', 300) // Reduced from 350
+                .attr('height', 110) // Reduced from 140
                 .attr('fill', 'white')
                 .attr('opacity', 0.9)
                 .attr('rx', 5)
@@ -539,7 +645,27 @@ const WorldMap = ({ selectedCategory }) => {
                 .attr('font-family', 'Helvetica, Arial, sans-serif')
                 .attr('font-size', '14px')
                 .attr('font-weight', 'bold')
-                .text(`Market Cap by Country${selectedCategory !== 'All' ? ` (${selectedCategory})` : ''}`);
+                .text(() => {
+                    let title = 'Market Cap by Company';
+                    
+                    // Add category info
+                    if (selectedCategory !== 'All') {
+                        title += ` (${selectedCategory})`;
+                    }
+                    
+                    // Add country info if specific countries are selected
+                    if (selectedCountries && !selectedCountries.includes('All')) {
+                        if (selectedCountries.length === 1) {
+                            title += ` - ${selectedCountries[0]}`;
+                        } else if (selectedCountries.length <= 3) {
+                            title += ` - ${selectedCountries.join(', ')}`;
+                        } else {
+                            title += ` - ${selectedCountries.length} countries`;
+                        }
+                    }
+                    
+                    return title;
+                });
 
             // Legend bubbles - use the same color scheme as the bubbles
             const legendValues = [valueExtent[0], (valueExtent[0] + valueExtent[1]) / 2, valueExtent[1]];
@@ -561,9 +687,9 @@ const WorldMap = ({ selectedCategory }) => {
             }
 
             legendValues.forEach((value, i) => {
-                // Increased spacing between legend bubbles
-                const cy = 50; // Moved bubbles down
-                const cx = i * 110 + 50; // Increased spacing from 80 to 110
+                // Adjusted spacing for smaller bubbles
+                const cy = 40; // Adjusted position
+                const cx = i * 90 + 40; // Reduced spacing from 110 to 90
 
                 // Add bubble
                 legendGroup.append('circle')
@@ -572,15 +698,15 @@ const WorldMap = ({ selectedCategory }) => {
                     .attr('r', bubbleScale(value))
                     .attr('fill', fillColor)
                     .attr('stroke', strokeColor)
-                    .attr('stroke-width', 2);
+                    .attr('stroke-width', 1.5); // Reduced to match main bubbles
 
-                // Add value label with more space
+                // Add value label with adjusted spacing
                 legendGroup.append('text')
                     .attr('x', cx)
-                    .attr('y', cy + bubbleScale(value) + 20) // Increased from +15 to +20
+                    .attr('y', cy + bubbleScale(value) + 15) // Adjusted for smaller bubbles
                     .attr('text-anchor', 'middle')
                     .attr('font-family', 'Helvetica, Arial, sans-serif')
-                    .attr('font-size', '12px')
+                    .attr('font-size', '11px') // Slightly reduced
                     .text(formatMarketCap(value));
             });
 
@@ -633,19 +759,29 @@ const WorldMap = ({ selectedCategory }) => {
 
     const tooltipStyle = {
         position: 'absolute',
-        left: tooltipPosition.x + 10,
-        top: tooltipPosition.y - 10,
-        backgroundColor: 'rgba(0,0,0,0.75)',
+        left: tooltipPosition.x,
+        top: tooltipPosition.y,
+        backgroundColor: 'rgba(0,0,0,0.9)',
         color: '#fff',
-        padding: '8px 12px',
-        borderRadius: '4px',
-        fontSize: '14px',
+        padding: window.innerWidth < 768 ? '8px 12px' : '12px 16px',
+        borderRadius: '8px',
+        fontSize: window.innerWidth < 768 ? '12px' : '13px',
+        fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+        lineHeight: window.innerWidth < 768 ? '1.3' : '1.4',
         pointerEvents: 'none',
         opacity: showTooltip ? 1 : 0,
-        transition: 'opacity 0.2s',
-        zIndex: 1000,
-        maxWidth: '300px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+        transition: 'opacity 0.15s ease-in-out',
+        zIndex: 9999, // Higher z-index to ensure it's always on top
+        maxWidth: window.innerWidth < 768 ? `${Math.min(window.innerWidth - 40, 280)}px` : '320px',
+        minWidth: window.innerWidth < 768 ? '180px' : '200px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        // Ensure tooltip content wraps properly
+        wordWrap: 'break-word',
+        whiteSpace: 'normal',
+        // Prevent tooltip from affecting page layout
+        transform: 'translateZ(0)', // Force hardware acceleration
+        willChange: 'opacity' // Optimize for animations
     };
 
     return (
