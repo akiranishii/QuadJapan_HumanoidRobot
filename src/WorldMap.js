@@ -30,7 +30,7 @@ const WorldMap = ({ selectedCategory, selectedSubcategory, selectedCountries }) 
 
             try {
                 // Load CSV from public directory using fetch
-                const response = await fetch('/data/full_dataset.csv');
+                const response = await fetch('./data/full_dataset.csv');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

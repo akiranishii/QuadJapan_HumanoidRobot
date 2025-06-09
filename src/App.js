@@ -16,7 +16,7 @@ function App() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const response = await fetch('/data/full_dataset.csv');
+                const response = await fetch('./data/full_dataset.csv');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

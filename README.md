@@ -82,7 +82,7 @@ The visualization uses `public/data/full_dataset.csv` containing:
 ## 🌐 GitHub Pages Deployment
 
 This project is configured to deploy to GitHub Pages automatically. The live site is available at:
-**https://nssokada.github.io/QuadJapan_HumanoidRobot/**
+**https://akiranishii.github.io/QuadJapan_HumanoidRobot/**
 
 ### **Automatic Deployment (Recommended)**
 The repository includes a GitHub Actions workflow that automatically deploys when you push to the `main` branch:
