@@ -11,6 +11,7 @@ const WorldMap = ({ selectedCategory, selectedSubcategory, selectedCountries }) 
     const [mapError, setMapError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState([]);
+    const [errorDismissed, setErrorDismissed] = useState(false);
 
     // Format market cap values for display
     const formatMarketCap = (value) => {
@@ -192,7 +193,7 @@ const WorldMap = ({ selectedCategory, selectedSubcategory, selectedCountries }) 
                 // Don't call renderMap directly here either - let the useEffect handle it
 
                 // Set a warning instead of error
-                setMapError(`Note: Using sample data. Could not load CSV file: ${error.message}`);
+                setMapError(`Using static JSON data. Could not load dynamic CSV file: ${error.message}`);
             } finally {
                 setIsLoading(false);
             }
@@ -905,11 +906,31 @@ const WorldMap = ({ selectedCategory, selectedSubcategory, selectedCountries }) 
     return (
         <div style={containerStyle}>
             {isLoading && <div style={loadingStyle}>Loading map...</div>}
-            {mapError && (
+            {mapError && !errorDismissed && (
                 <div style={warningStyle}>
-                    <p style={warningContent}>
-                        <strong>Note:</strong> {mapError}
-                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <p style={warningContent}>
+                            <strong>Note:</strong> {mapError}
+                        </p>
+                        <button
+                            onClick={() => setErrorDismissed(true)}
+                            style={{
+                                marginLeft: '8px',
+                                padding: '2px 6px',
+                                fontSize: '12px',
+                                backgroundColor: '#78350f',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                flexShrink: 0
+                            }}
+                            title="Dismiss notification"
+                        >
+                            ×
+                        </button>
+                    </div>
                 </div>
             )}
             <svg ref={svgRef} style={svgStyle} />
